@@ -1,0 +1,17 @@
+{
+  "index_column": "NUTS_ID",
+  "rendered_columns": [
+    "Tree cover",
+    "Shrubland",
+    "Grassland",
+    "Cropland",
+    "Built-up",
+    "Bare / sparse vegetation",
+    "Snow and ice",
+    "Permanent water bodies",
+    "Herbaceous wetland",
+    "Mangroves",
+    "Moss and lichen",
+    "Unknown"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "$id": "https://sparkgeo.com/schemas/fgb-metadata/v1.0.0/fgb-metadata.json",
+  "title": "Flatgeobuf metadata schema",
+  "type": "object",
+  "properties": {
+    "index_column": {
+      "title": "Index Column",
+      "type": "string"
+    },
+    "rendered_columns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Rendered Columns",
+      "type": "array"
+    }
+  },
+  "required": [
+    "index_column",
+    "rendered_columns"
+  ]
+}
