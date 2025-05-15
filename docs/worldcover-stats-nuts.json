@@ -1,6 +1,8 @@
 {
-  "index_column": "NUTS_ID",
-  "rendered_columns": [
+  "identifierKey": "NUTS_ID",
+  "nameKey": "NUTS_NAME",
+  "levelKey": "LEVL_CODE",
+  "attributeKeys": [
     "Tree cover",
     "Shrubland",
     "Grassland",

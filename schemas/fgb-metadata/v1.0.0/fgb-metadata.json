@@ -3,20 +3,30 @@
   "title": "Flatgeobuf metadata schema",
   "type": "object",
   "properties": {
-    "index_column": {
-      "title": "Index Column",
+    "identifierKey": {
+      "title": "Identifier Key",
       "type": "string"
     },
-    "rendered_columns": {
+    "nameKey": {
+      "title": "Name Key",
+      "type": "string"
+    },
+    "levelKey": {
+      "title": "Level Key",
+      "type": "string"
+    },
+    "attributeKeys": {
       "items": {
         "type": "string"
       },
-      "title": "Rendered Columns",
+      "title": "Attribute Keys",
       "type": "array"
     }
   },
   "required": [
-    "index_column",
-    "rendered_columns"
+    "identifierKey",
+    "nameKey",
+    "levelKey",
+    "attributeKeys"
   ]
 }

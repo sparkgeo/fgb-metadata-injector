@@ -12,18 +12,23 @@ class MissingColumn(Exception):
     pass
 
 
-class Metadata(BaseModel):
-    index_column: str
-    rendered_columns: list[str]
+class MetadataIn(BaseModel):
+    identifierKey: str
+    nameKey: str
+    levelKey: str
+    attributeKeys: list[str]
+
+
+class MetadataOut(BaseModel):
+    identifierKey: str
+    nameKey: str
+    levelKey: str
+    attributeKeys: list[int]
 
     # FGB metadata fields can only be strings.
-    @field_serializer("rendered_columns")
-    def serialize_rendered_columns(self, v, _):
-        # Use CSV which handles quoting and escaped characters better than I can.
-        s = StringIO()
-        csv_writer = csv.writer(s, quotechar="'", quoting=csv.QUOTE_ALL, lineterminator="")
-        csv_writer.writerow(v)
-        return s.getvalue()
+    @field_serializer("attributeKeys")
+    def serialize_attribute_keys(self, keys, _):
+        return ",".join([str(v) for v in keys])
 
 
 @click.command()
@@ -35,7 +40,7 @@ def inject_metadata(fgb_file_path: str, metadata_file_path: str):
 
     try:
         j = json.load(metadata_file_path.open())
-        metadata = Metadata.model_validate(j)
+        metadata = MetadataIn.model_validate(j)
     except ValidationError as e:
         raise
 
@@ -52,12 +57,25 @@ def inject_metadata(fgb_file_path: str, metadata_file_path: str):
     # Check columns exist in the input file.
     defn = src_layer.GetLayerDefn()
 
-    if defn.GetFieldIndex(metadata.index_column) == -1:
-        raise MissingColumn(f"Index column '{metadata.index_column}' not found in {fgb_file_path}")
+    if defn.GetFieldIndex(metadata.identifierKey) == -1:
+        raise MissingColumn(f"Index column '{metadata.identifierKey}' not found in {fgb_file_path}")
 
-    for column in metadata.rendered_columns:
-        if defn.GetFieldIndex(column) == -1:
+    if defn.GetFieldIndex(metadata.nameKey) == -1:
+        raise MissingColumn(f"Name column '{metadata.nameKey}' not found in {fgb_file_path}")
+
+    if defn.GetFieldIndex(metadata.levelKey) == -1:
+        raise MissingColumn(f"Level column '{metadata.levelKey}' not found in {fgb_file_path}")
+
+    attribute_column_indices = []
+
+    for column in metadata.attributeKeys:
+        column_index = defn.GetFieldIndex(column)
+        if column_index == -1:
             raise MissingColumn(f"Column '{column}' not found in {fgb_file_path}")
+        else:
+            attribute_column_indices.append(column_index)
+
+    metadata_out = MetadataOut(identifierKey=metadata.identifierKey, nameKey=metadata.nameKey, levelKey=metadata.levelKey, attributeKeys=attribute_column_indices)
 
     # Overwrite the input file.
     driver = ogr.GetDriverByName("FlatGeobuf")
@@ -65,11 +83,11 @@ def inject_metadata(fgb_file_path: str, metadata_file_path: str):
     dst_ds.CopyLayer(src_layer, src_layer.GetName())
 
     print(f"Metadata injected into {fgb_file_path}")
-    print(f"{metadata}")
+    print(f"{metadata_out}")
 
     # We serialize the metadata to a string to take advantage of Pydantic's field serializer,
     # then load it back up as a regular Python object so OGR can set the metadata.
-    dst_ds.SetMetadata(json.loads(metadata.model_dump_json()))
+    dst_ds.SetMetadata(json.loads(metadata_out.model_dump_json()))
 
     dst_ds = None
     src_ds = None
